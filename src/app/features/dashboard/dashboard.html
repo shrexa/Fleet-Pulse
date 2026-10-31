@@ -1,0 +1,121 @@
+<div class="page">
+  <header class="hero">
+    <p class="eyebrow">Operations monitoring</p>
+    <h1>Fleet Pulse</h1>
+    <p class="lede">Current health and performance of the service fleet.</p>
+  </header>
+
+  <section class="summary" aria-label="Fleet summary">
+    <article class="summary-card">
+      <p class="summary-label">Total services</p>
+      <p class="summary-value">{{ summary().total }}</p>
+    </article>
+    <article class="summary-card summary-card--healthy">
+      <p class="summary-label">Healthy</p>
+      <p class="summary-value">{{ summary().healthy }}</p>
+    </article>
+    <article class="summary-card summary-card--degraded">
+      <p class="summary-label">Degraded</p>
+      <p class="summary-value">{{ summary().degraded }}</p>
+    </article>
+    <article class="summary-card summary-card--down">
+      <p class="summary-label">Down</p>
+      <p class="summary-value">{{ summary().down }}</p>
+    </article>
+  </section>
+
+  <section class="toolbar" aria-label="Table controls">
+    <div class="field">
+      <label for="service-search">Search by name or ID</label>
+      <input
+        id="service-search"
+        type="search"
+        [value]="searchQuery()"
+        (input)="onSearchInput($event)"
+        placeholder="payments-api or svc-0001"
+        autocomplete="off"
+      />
+    </div>
+
+    <div class="field">
+      <label for="status-filter">Status</label>
+      <select id="status-filter" [value]="statusFilter()" (change)="onStatusFilterChange($event)">
+        <option value="all">All</option>
+        <option value="healthy">Healthy</option>
+        <option value="degraded">Degraded</option>
+        <option value="down">Down</option>
+      </select>
+    </div>
+
+    <button type="button" class="reset" (click)="resetFilters()" [disabled]="!hasActiveFilters()">
+      Clear filters
+    </button>
+  </section>
+
+  @if (fleetServices.isLoading()) {
+    <p class="state" role="status">Loading services…</p>
+  } @else if (visibleServices().length === 0) {
+    <p class="state" role="status">No services match the current search and filters.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <caption class="visually-hidden">
+          Microservice health, latency, error rate, and requests per second
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" [attr.aria-sort]="sortAria('name')">
+              <button type="button" (click)="toggleSort('name')">
+                Service Name
+                <span aria-hidden="true">{{ sortIndicator('name') }}</span>
+              </button>
+            </th>
+            <th scope="col">Service ID</th>
+            <th scope="col" [attr.aria-sort]="sortAria('status')">
+              <button type="button" (click)="toggleSort('status')">
+                Status
+                <span aria-hidden="true">{{ sortIndicator('status') }}</span>
+              </button>
+            </th>
+            <th scope="col" [attr.aria-sort]="sortAria('p95LatencyMs')">
+              <button type="button" (click)="toggleSort('p95LatencyMs')">
+                P95 Latency (ms)
+                <span aria-hidden="true">{{ sortIndicator('p95LatencyMs') }}</span>
+              </button>
+            </th>
+            <th scope="col" [attr.aria-sort]="sortAria('errorRatePercent')">
+              <button type="button" (click)="toggleSort('errorRatePercent')">
+                Error Rate (%)
+                <span aria-hidden="true">{{ sortIndicator('errorRatePercent') }}</span>
+              </button>
+            </th>
+            <th scope="col" [attr.aria-sort]="sortAria('requestsPerSecond')">
+              <button type="button" (click)="toggleSort('requestsPerSecond')">
+                Requests Per Second (RPS)
+                <span aria-hidden="true">{{ sortIndicator('requestsPerSecond') }}</span>
+              </button>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (service of visibleServices(); track service.id) {
+            <tr>
+              <th scope="row">{{ service.name }}</th>
+              <td>
+                <code>{{ service.id }}</code>
+              </td>
+              <td>
+                <span class="badge" [class]="'badge badge--' + service.status">
+                  {{ service.status }}
+                </span>
+              </td>
+              <td class="numeric">{{ service.metrics.p95LatencyMs | number: '1.0-0' }}</td>
+              <td class="numeric">{{ service.metrics.errorRatePercent | number: '1.1-1' }}</td>
+              <td class="numeric">{{ service.metrics.requestsPerSecond | number: '1.0-0' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
