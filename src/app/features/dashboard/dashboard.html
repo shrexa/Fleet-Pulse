@@ -54,6 +54,13 @@
 
   @if (fleetServices.isLoading()) {
     <p class="state" role="status">Loading services…</p>
+  } @else if (fleetServices.error(); as errorMessage) {
+    <div class="state state--error" role="alert">
+      <p>{{ errorMessage }}</p>
+      <button type="button" class="retry" (click)="retryLoad()">Retry</button>
+    </div>
+  } @else if (fleetServices.services().length === 0) {
+    <p class="state" role="status">No services were returned by the API.</p>
   } @else if (visibleServices().length === 0) {
     <p class="state" role="status">No services match the current search and filters.</p>
   } @else {
@@ -109,13 +116,17 @@
                   {{ service.status }}
                 </span>
               </td>
-              <td class="numeric">{{ service.metrics.p95LatencyMs | number: '1.0-0' }}</td>
-              <td class="numeric">{{ service.metrics.errorRatePercent | number: '1.1-1' }}</td>
-              <td class="numeric">{{ service.metrics.requestsPerSecond | number: '1.0-0' }}</td>
+              <!-- TEMPORARY: metric values are placeholders, not API data. -->
+              <td class="numeric numeric--placeholder">{{ service.metrics.p95LatencyMs | number: '1.0-0' }}</td>
+              <td class="numeric numeric--placeholder">{{ service.metrics.errorRatePercent | number: '1.1-1' }}</td>
+              <td class="numeric numeric--placeholder">{{ service.metrics.requestsPerSecond | number: '1.0-0' }}</td>
             </tr>
           }
         </tbody>
       </table>
     </div>
+    <p class="metrics-note">
+      Latency, error rate, and RPS are placeholders. GET /services does not return metrics yet.
+    </p>
   }
 </div>

@@ -11,11 +11,11 @@ import {
 } from '../services/service.model';
 
 /**
- * Fleet Pulse dashboard (Chunk 1).
+ * Fleet Pulse dashboard.
  *
- * Local UI state (search, status filter, sort) lives in signals on this
- * component. The service list comes from FleetServices. A computed signal
- * then combines those inputs into the rows the table actually renders.
+ * Local UI state (search, status filter, sort) stays on this component.
+ * FleetServices now loads GET /services; this component only reads its
+ * signals and decides loading / error / empty / table.
  */
 @Component({
   imports: [DecimalPipe],
@@ -138,6 +138,14 @@ export class Dashboard {
   resetFilters(): void {
     this.searchQuery.set('');
     this.statusFilter.set('all');
+  }
+
+  /**
+   * Retry asks FleetServices to GET /services again.
+   * The service no-ops if a request is already in flight.
+   */
+  retryLoad(): void {
+    this.fleetServices.loadServices();
   }
 
   sortAria(column: SortableColumn): 'ascending' | 'descending' | 'none' {

@@ -79,7 +79,8 @@
 
 .field input,
 .field select,
-.reset {
+.reset,
+.retry {
   min-height: 2.5rem;
   padding: 0.45rem 0.7rem;
   border: 1px solid #c5ced8;
@@ -106,6 +107,33 @@
   border-radius: 0.75rem;
   background: #fff;
   color: #5b6573;
+}
+
+.state--error {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+  border-color: #f0b6b6;
+  color: #9f1c1c;
+}
+
+.state--error p {
+  margin: 0;
+}
+
+.retry {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.numeric--placeholder {
+  color: #8b95a3;
+}
+
+.metrics-note {
+  margin: 0;
+  color: #5b6573;
+  font-size: 0.85rem;
 }
 
 .table-wrap {
