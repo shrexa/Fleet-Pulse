@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import request from 'supertest';
+import { createToken } from './auth/tokens';
 import { createApp } from './app';
 import { DEFAULT_SERVICE_COUNT, SERVICE_CATALOG } from './data/services.data';
 import type { AuthTokenResponse } from './types/auth';
@@ -31,6 +32,16 @@ function isServiceBody(value: unknown): value is FleetService {
   );
 }
 
+async function loginAs(email: string): Promise<AuthTokenResponse> {
+  const response = await request(app).post('/auth/login').send({
+    email,
+    password: 'pulse123',
+  });
+
+  assert.ok(isAuthTokenResponse(response.body));
+  return response.body;
+}
+
 describe('GET /health', () => {
   it('still returns { status: "ok" }', async () => {
     const response = await request(app).get('/health');
@@ -41,8 +52,30 @@ describe('GET /health', () => {
 });
 
 describe('GET /services', () => {
-  it('returns exactly 2,000 typed catalog rows', async () => {
+  it('rejects requests without an access token', async () => {
     const response = await request(app).get('/services');
+
+    assert.equal(response.status, 401);
+    assert.equal((response.body as { code?: string }).code, 'unauthorized');
+  });
+
+  it('returns token_expired for an expired access token', async () => {
+    const expired = createToken(
+      { email: 'operator@pulse.dev', role: 'operator' },
+      'access',
+      Date.now() - 120_000,
+    );
+    const response = await request(app).get('/services').set('Authorization', `Bearer ${expired}`);
+
+    assert.equal(response.status, 401);
+    assert.equal((response.body as { code?: string }).code, 'token_expired');
+  });
+
+  it('returns exactly 2,000 typed catalog rows', async () => {
+    const session = await loginAs('operator@pulse.dev');
+    const response = await request(app)
+      .get('/services')
+      .set('Authorization', `Bearer ${session.accessToken}`);
     const body: unknown = response.body;
 
     assert.equal(response.status, 200);
@@ -88,7 +121,10 @@ function isMetricsSnapshot(value: unknown): value is MetricsSnapshot {
 
 describe('GET /metrics/snapshot', () => {
   it('returns a timestamped snapshot for every catalog service', async () => {
-    const response = await request(app).get('/metrics/snapshot');
+    const session = await loginAs('operator@pulse.dev');
+    const response = await request(app)
+      .get('/metrics/snapshot')
+      .set('Authorization', `Bearer ${session.accessToken}`);
     const body: unknown = response.body;
     const catalogIds = new Set(SERVICE_CATALOG.map((service) => service.id));
 

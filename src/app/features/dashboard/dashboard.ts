@@ -1,5 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { Auth } from '../auth/auth';
 import { FleetServices } from '../services/fleet-services';
 import {
   FleetService,
@@ -24,6 +26,8 @@ import {
 })
 export class Dashboard {
   readonly fleetServices = inject(FleetServices);
+  readonly auth = inject(Auth);
+  private readonly router = inject(Router);
 
   /** Free-text query matched against service name or service ID. */
   readonly searchQuery = signal('');
@@ -145,6 +149,11 @@ export class Dashboard {
    */
   retryLoad(): void {
     this.fleetServices.loadServices();
+  }
+
+  logout(): void {
+    this.auth.logout();
+    void this.router.navigateByUrl('/login');
   }
 
   sortAria(column: SortableColumn): 'ascending' | 'descending' | 'none' {

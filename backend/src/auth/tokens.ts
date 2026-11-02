@@ -30,35 +30,56 @@ export function createToken(user: AuthUser, typ: TokenType, now = Date.now()): s
   return `${body}.${sign(body)}`;
 }
 
-export function verifyToken(token: string, expectedType: TokenType, now = Date.now()): TokenPayload | null {
+export type TokenInspectResult =
+  | { status: 'ok'; payload: TokenPayload }
+  | { status: 'expired' }
+  | { status: 'invalid' };
+
+/**
+ * Distinguishes expired vs invalid so the API can return `token_expired`
+ * and the Angular interceptor knows it should refresh instead of logging out.
+ */
+export function inspectToken(
+  token: string,
+  expectedType: TokenType,
+  now = Date.now(),
+): TokenInspectResult {
   const parts = token.split('.');
 
   if (parts.length !== 2) {
-    return null;
+    return { status: 'invalid' };
   }
 
   const [body, signature] = parts;
   const expected = sign(body);
-
   const actualBuf = Buffer.from(signature);
   const expectedBuf = Buffer.from(expected);
 
   if (actualBuf.length !== expectedBuf.length || !timingSafeEqual(actualBuf, expectedBuf)) {
-    return null;
+    return { status: 'invalid' };
   }
 
   try {
     const parsed: unknown = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
     const payload = asTokenPayload(parsed);
 
-    if (!payload || payload.typ !== expectedType || payload.exp * 1000 <= now) {
-      return null;
+    if (!payload || payload.typ !== expectedType) {
+      return { status: 'invalid' };
     }
 
-    return payload;
+    if (payload.exp * 1000 <= now) {
+      return { status: 'expired' };
+    }
+
+    return { status: 'ok', payload };
   } catch {
-    return null;
+    return { status: 'invalid' };
   }
+}
+
+export function verifyToken(token: string, expectedType: TokenType, now = Date.now()): TokenPayload | null {
+  const result = inspectToken(token, expectedType, now);
+  return result.status === 'ok' ? result.payload : null;
 }
 
 function asTokenPayload(value: unknown): TokenPayload | null {

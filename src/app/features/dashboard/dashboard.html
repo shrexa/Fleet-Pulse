@@ -1,8 +1,19 @@
 <div class="page">
   <header class="hero">
-    <p class="eyebrow">Operations monitoring</p>
-    <h1>Fleet Pulse</h1>
-    <p class="lede">Current health and performance of the service fleet.</p>
+    <div class="hero-row">
+      <div>
+        <p class="eyebrow">Operations monitoring</p>
+        <h1>Fleet Pulse</h1>
+        <p class="lede">Current health and performance of the service fleet.</p>
+      </div>
+      @if (auth.user(); as user) {
+        <div class="session">
+          <p class="session-user">{{ user.email }}</p>
+          <p class="session-role">{{ user.role }}</p>
+          <button type="button" class="logout" (click)="logout()">Log out</button>
+        </div>
+      }
+    </div>
   </header>
 
   <section class="summary" aria-label="Fleet summary">

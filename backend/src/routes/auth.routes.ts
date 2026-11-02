@@ -13,7 +13,7 @@ import type { AuthTokenResponse, AuthUser } from '../types/auth';
  *
  * POST /auth/login issues short-lived access tokens (60s) plus a refresh
  * token. POST /auth/refresh exists so the login response is actually usable
- * after expiry. Existing catalog/metrics routes stay public in this chunk.
+ * after expiry. Catalog and metrics routes require a Bearer access token.
  */
 export const authRouter = Router();
 
