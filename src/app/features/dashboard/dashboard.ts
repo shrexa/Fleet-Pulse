@@ -1,4 +1,4 @@
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FleetServices } from '../services/fleet-services';
 import {
@@ -14,11 +14,10 @@ import {
  * Fleet Pulse dashboard.
  *
  * Local UI state (search, status filter, sort) stays on this component.
- * FleetServices now loads GET /services; this component only reads its
- * signals and decides loading / error / empty / table.
+ * FleetServices loads catalog + metrics and exposes one joined list.
  */
 @Component({
-  imports: [DecimalPipe],
+  imports: [DatePipe, DecimalPipe],
   selector: 'app-dashboard',
   styleUrl: './dashboard.scss',
   templateUrl: './dashboard.html',
@@ -141,7 +140,7 @@ export class Dashboard {
   }
 
   /**
-   * Retry asks FleetServices to GET /services again.
+   * Retry re-runs both GET /services and GET /metrics/snapshot.
    * The service no-ops if a request is already in flight.
    */
   retryLoad(): void {

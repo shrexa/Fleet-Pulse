@@ -13,6 +13,8 @@ export interface AppConfig {
    * without a CORS failure.
    */
   corsOrigin: string;
+  /** HMAC secret for mock access/refresh tokens. Override in real deploys. */
+  authSecret: string;
 }
 
 const DEFAULT_PORT = 4000;
@@ -39,4 +41,5 @@ function parsePort(value: string | undefined): number {
 export const config: AppConfig = {
   port: parsePort(process.env.PORT),
   corsOrigin: process.env.CORS_ORIGIN?.trim() || DEFAULT_CORS_ORIGIN,
+  authSecret: process.env.AUTH_SECRET?.trim() || 'fleet-pulse-dev-secret',
 };

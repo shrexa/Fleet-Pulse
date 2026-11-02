@@ -24,10 +24,8 @@ export interface ServiceMetrics {
 }
 
 /**
- * One dashboard row: API identity plus metrics.
- *
- * GET /services currently returns id, name, team, and status only.
- * `metrics` is filled with PLACEHOLDER_METRICS until a later metrics endpoint exists.
+ * One dashboard row: catalog identity from GET /services plus
+ * measurements from GET /metrics/snapshot, joined on service id.
  */
 export interface FleetService {
   /** Stable identifier such as "svc-0001". Used for search and as the table track key. */
@@ -41,8 +39,8 @@ export interface FleetService {
 }
 
 /**
- * Shape of one GET /services item. No metrics — the backend contract
- * must not be stretched to match the table.
+ * Shape of one GET /services item. Catalog only — measurements come from
+ * GET /metrics/snapshot and are joined in FleetServices.
  */
 export interface ServiceCatalogItem {
   id: string;
@@ -52,10 +50,27 @@ export interface ServiceCatalogItem {
 }
 
 /**
- * TEMPORARY placeholders so the existing metric columns still render.
- * These are not API values. A later chunk should replace them with real snapshots.
+ * Shape of one GET /metrics/snapshot row.
+ * Field names follow the backend (`latencyMs`, `errorRate`), then map
+ * onto ServiceMetrics for the table.
  */
-export const PLACEHOLDER_METRICS: ServiceMetrics = {
+export interface MetricsSnapshotItem {
+  serviceId: string;
+  latencyMs: number;
+  errorRate: number;
+  requestsPerSecond: number;
+}
+
+export interface MetricsSnapshot {
+  timestamp: string;
+  metrics: MetricsSnapshotItem[];
+}
+
+/**
+ * Fallback only when a catalog id has no snapshot row.
+ * Real cells use API metrics; this is not a substitute for the snapshot.
+ */
+export const MISSING_METRICS: ServiceMetrics = {
   p95LatencyMs: 0,
   errorRatePercent: 0,
   requestsPerSecond: 0,
